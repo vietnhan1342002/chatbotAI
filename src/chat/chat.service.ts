@@ -2,11 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { ChatGroq } from "@langchain/groq";
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
-
+import { Pinecone } from '@pinecone-database/pinecone';
+import { SelfQueryRetriever } from "langchain/retrievers/self_query";
+// import { PineconeTranslator } from "@langchain/pinecone";
 @Injectable()
 export class ChatService {
   private llm;
   private chatHistory = [];
+  private vectorStore;
 
   constructor() {
     const apiKey = "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";
@@ -15,6 +18,13 @@ export class ChatService {
       temperature: 0,
       apiKey
     });
+
+    // Initialize the Pinecone client for document retrieval
+    const pc = new Pinecone({
+      apiKey: "pcsk_6exEkN_LwZnN4UQRXRdb1qYnRg4JGdkn8ewi6zG8pRkwRyuLAXQB4ZGgiLsMKXXwQTHCFd"
+    });
+    const index = pc.index('langchain-chatbot');
+
   }
 
   async processMessage(input: string) {
@@ -68,5 +78,7 @@ export class ChatService {
 
     return jsonResponse;
   }
+
+
 
 }
