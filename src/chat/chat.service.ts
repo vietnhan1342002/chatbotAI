@@ -18,6 +18,19 @@ export class ChatService {
   }
 
   async processMessage(input: string) {
+
+    const farewellKeywords = ['bye', 'goodbye', 'see you', 'later', 'farewell', 'take care'];
+
+
+
+    if (farewellKeywords.some(keyword => input.toLowerCase().includes(keyword))) {
+
+      this.chatHistory = [];
+      return {
+        message: 'Goodbye! The chat history has been cleared. Feel free to start a new conversation anytime!',
+      };
+    }
+
     const prompt = ChatPromptTemplate.fromMessages([
       [
         'system',
@@ -32,7 +45,6 @@ export class ChatService {
       ['human', '{input}'],
     ]);
 
-    // Định dạng prompt
     const formattedPrompt = await prompt.format({
       chat_history: this.chatHistory,
       input,
@@ -40,10 +52,21 @@ export class ChatService {
 
     const response = await this.llm.invoke(formattedPrompt);
 
-    // Cập nhật lịch sử chat
+    let jsonResponse;
+    try {
+      // Kiểm tra xem phản hồi có phải JSON không
+      jsonResponse = JSON.parse(response.content);
+    } catch (error) {
+      const sanitizedContent = response.content.replace(/^AI:\s*/, '');
+      jsonResponse = {
+        message: sanitizedContent.trim(),
+      };
+    }
+
     this.chatHistory.push(new HumanMessage({ content: input }));
     this.chatHistory.push(new AIMessage({ content: response.content }));
 
-    return JSON.parse(response.content);
+    return jsonResponse;
   }
+
 }
